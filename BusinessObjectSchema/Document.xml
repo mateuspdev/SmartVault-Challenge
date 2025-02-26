@@ -6,6 +6,7 @@
 		<property name="FilePath" type="string" />
 		<property name="Length" type="int" />
 		<property name="AccountId" type="int" />
+		<property name="CreatedOn" type="System.DateTime" />
 	</propertyGroup>
 	<script>
 		CREATE TABLE Document (
@@ -13,7 +14,8 @@
 			Name TEXT,
 			FilePath TEXT,
 			Length INTEGER,
-			AccountId INTEGER
+			AccountId INTEGER,
+			CreatedOn TEXT
 		);
 	</script>
 </businessObject>

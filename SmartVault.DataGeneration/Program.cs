@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 using SmartVault.Library;
 using System;
 using System.Collections.Generic;
@@ -62,6 +63,9 @@ namespace SmartVault.DataGeneration
                         // Prepare random date generator for users
                         var randomDayIterator = RandomDay().GetEnumerator();
 
+                        // Get current timestamp for CreatedOn fields
+                        string currentTimestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+
                         // Batch insert users and accounts
                         var userInserts = new List<string>();
                         var accountInserts = new List<string>();
@@ -70,17 +74,17 @@ namespace SmartVault.DataGeneration
                         {
                             randomDayIterator.MoveNext();
                             var randomDate = randomDayIterator.Current.ToString("yyyy-MM-dd");
-                            userInserts.Add($"('{i}','FName{i}','LName{i}','{randomDate}','{i}','UserName-{i}','e10adc3949ba59abbe56e057f20f883e')");
-                            accountInserts.Add($"('{i}','Account{i}')");
+                            userInserts.Add($"('{i}','FName{i}','LName{i}','{randomDate}','{i}','UserName-{i}','e10adc3949ba59abbe56e057f20f883e','{currentTimestamp}')");
+                            accountInserts.Add($"('{i}','Account{i}','{currentTimestamp}')");
                         }
 
                         // Execute batch inserts for users and accounts
                         connection.Execute(
-                            $"INSERT INTO User (Id, FirstName, LastName, DateOfBirth, AccountId, Username, Password) VALUES {string.Join(",", userInserts)}",
+                            $"INSERT INTO User (Id, FirstName, LastName, DateOfBirth, AccountId, Username, Password, CreatedOn) VALUES {string.Join(",", userInserts)}",
                             transaction: transaction);
 
                         connection.Execute(
-                            $"INSERT INTO Account (Id, Name) VALUES {string.Join(",", accountInserts)}",
+                            $"INSERT INTO Account (Id, Name, CreatedOn) VALUES {string.Join(",", accountInserts)}",
                             transaction: transaction);
 
                         // Insert documents in batches to avoid memory issues
@@ -95,11 +99,11 @@ namespace SmartVault.DataGeneration
 
                                 for (int d = 0; d < batchSize; d++, documentNumber++)
                                 {
-                                    documentInserts.Add($"('{documentNumber}','Document{i}-{batch * batchSize + d}.txt','{documentPath}','{documentLength}','{i}')");
+                                    documentInserts.Add($"('{documentNumber}','Document{i}-{batch * batchSize + d}.txt','{documentPath}','{documentLength}','{i}','{currentTimestamp}')");
                                 }
 
                                 connection.Execute(
-                                    $"INSERT INTO Document (Id, Name, FilePath, Length, AccountId) VALUES {string.Join(",", documentInserts)}",
+                                    $"INSERT INTO Document (Id, Name, FilePath, Length, AccountId, CreatedOn) VALUES {string.Join(",", documentInserts)}",
                                     transaction: transaction);
 
                                 // Report progress
@@ -129,8 +133,34 @@ namespace SmartVault.DataGeneration
                 var userCount = connection.ExecuteScalar<int>("SELECT COUNT(*) FROM User;");
                 Console.WriteLine($"Total users created: {userCount:N0}");
 
+                // Verify database structure
+                Console.WriteLine("\nVerifying database structure:");
+
+                // Get table schema information
+                var tables = new[] { "Account", "Document", "User" };
+                foreach (var table in tables)
+                {
+                    Console.WriteLine($"\nTable: {table}");
+                    var columns = connection.Query("PRAGMA table_info(" + table + ");");
+                    foreach (var column in columns)
+                    {
+                        Console.WriteLine($"  {column.name} ({column.type})");
+                    }
+
+                    // Show sample data
+                    Console.WriteLine("\nSample data:");
+                    var sampleData = connection.Query($"SELECT * FROM {table} LIMIT 1");
+                    foreach (var row in sampleData)
+                    {
+                        foreach (var property in ((IDictionary<string, object>)row))
+                        {
+                            Console.WriteLine($"  {property.Key}: {property.Value}");
+                        }
+                    }
+                }
+
                 stopwatch.Stop();
-                Console.WriteLine($"Data generation completed in {stopwatch.ElapsedMilliseconds / 1000.0} seconds");
+                Console.WriteLine($"\nData generation completed in {stopwatch.ElapsedMilliseconds / 1000.0} seconds");
             }
         }
 

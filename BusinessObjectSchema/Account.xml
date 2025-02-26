@@ -3,11 +3,13 @@
 	<propertyGroup>
 		<property name="Id" type="int" />
 		<property name="Name" type="string" />
+		<property name="CreatedOn" type="System.DateTime" />
 	</propertyGroup>
 	<script>
 		CREATE TABLE Account (
 			Id INTEGER PRIMARY KEY,
-			Name TEXT
+			Name TEXT,
+			CreatedOn TEXT
 		);
 	</script>
 </businessObject>
