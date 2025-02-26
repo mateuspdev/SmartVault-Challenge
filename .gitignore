@@ -362,6 +362,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
+# Test database
 testdb.sqlite
 testdb.sqlite-journal
 TestDoc.txt
