@@ -23,7 +23,7 @@ namespace SmartVault.DataGeneration
 
             using (var connection = new SQLiteConnection(string.Format(configuration?["ConnectionStrings:DefaultConnection"] ?? "", configuration?["DatabaseFileName"])))
             {
-                var files = Directory.GetFiles(@"..\..\..\..\BusinessObjectSchema");
+                var files = Directory.GetFiles(Path.Combine(Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..")), "BusinessObjectSchema"));
                 for (int i = 0; i <= 2; i++)
                 {
                     var serializer = new XmlSerializer(typeof(BusinessObject));
